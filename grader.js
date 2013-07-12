@@ -92,7 +92,7 @@ if(require.main == module) {
         .parse(process.argv);
     var htmlFile = program.file;
     if (program.url) {
-      console.log("Going to check online Html from %s", program.url)
+      console.error("Going to check online Html from %s", program.url)
       checkOnlineHtml(program.url, program.checks);
     }
     else {
