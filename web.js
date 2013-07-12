@@ -7,9 +7,9 @@ var fs = require('fs');
 var indexContent = fs.readFileSync("index.html").toString(); // converts buffer to utf8 string
 
 app.get('/', function(request, response) {
-  //response.send('Hello World 2!');
   response.send(indexContent);
 });
+// end of HW3
 
 var port = process.env.PORT || 5000;
 app.listen(port, function() {
