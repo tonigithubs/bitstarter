@@ -24,8 +24,10 @@ References:
 var fs = require('fs');
 var program = require('commander');
 var cheerio = require('cheerio');
+var rest = require('restler');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var URL_DEFAULT = "fromurl.html";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -61,14 +63,41 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+var checkOnlineHtml = function(htmlurl, checksfile) {
+    rest.get(htmlurl).on("complete", function(result, response) {
+      if (result instanceof Error) {
+        console.error('Error: ' + util.format(result.message));
+      }
+      else {
+        console.error("Wrote %s", URL_DEFAULT);
+        fs.writeFileSync(URL_DEFAULT, result);
+        // rest.get is asynchronous, by introducing this call here we force the rest of the execution to wait
+        // https://class.coursera.org/startup-001/forum/thread?thread_id=3186
+        processFile(URL_DEFAULT, checksfile);
+      }
+    });
+};
+
+var processFile = function(htmlfile, checksfile) {
+    var checkJson = checkHtmlFile(htmlFile, checksfile);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+};
+
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <html_url>', 'URL to index.html')
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    var htmlFile = program.file;
+    if (program.url) {
+      console.log("Going to check online Html from %s", program.url)
+      checkOnlineHtml(program.url, program.checks);
+    }
+    else {
+      processFile(program.file, program.checks); // don't repeat code!
+    }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
